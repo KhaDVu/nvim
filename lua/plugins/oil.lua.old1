@@ -1,0 +1,43 @@
+-- Function to dynamically choose between oil.nvim and netrw
+function OpenRemoteFile(path)
+  if not path then
+    path = vim.fn.input("Enter remote path: ")
+  end
+
+  if path:match("^scp://") then
+    -- Use netrw for scp protocol
+    vim.cmd("edit " .. path)
+  elseif path:match("^ssh://") then
+    -- Use oil.nvim for ssh protocol
+    require("oil").open(path)
+  else
+    print("Unsupported protocol. Use ssh:// or scp://")
+  end
+end
+
+-- Key mapping to open remote files
+vim.keymap.set("n", "<leader>rf", function()
+  OpenRemoteFile()
+end, { desc = "Open Remote File with appropriate tool" })
+
+return {
+  {
+    "stevearc/oil.nvim",
+    --@module 'oil'
+    --@type oil.SetupOpts
+    opts = {},
+    -- Optional dependencies
+    dependencies = { { "echasnovski/mini.icons", opts = {} } },
+    -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if prefer nvim-web-devicons
+    config = function()
+      require("oil").setup({
+        keymaps = {
+          ["q"] = "action.close",
+        },
+        adapters = {
+          ["ssh"] = "oil-ssh",
+        },
+      })
+    end,
+  },
+}

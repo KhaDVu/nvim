@@ -1,0 +1,169 @@
+-- Autocmds are automatically loaded on the VeryLazy event
+-- Default autocmds that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/autocmds.lua
+-- Add any additional autocmds here
+-- local function open_path(path)
+--   if string.match(path, "^scp://") or string.match(path, "^sftp://") then
+--     -- Use netrw for remote paths (files or directories)
+--     vim.cmd("edit " .. path)
+--   else
+--     local uv = vim.loop
+--     if uv.fs_stat(path) and uv.fs_stat(path).type == "directory" then
+--       -- Use oil for local directories
+--       require("oil").open(path)
+--     else
+--       -- Open local files
+--       vim.cmd("edit " .. path)
+--     end
+--   end
+-- end
+-- local function open_path(path)
+--   if string.match(path, "^scp://") or string.match(path, "^sftp://") then
+--     -- Open remote files or directories using netrw
+--     vim.cmd("Explore " .. path)
+--   else
+--     local uv = vim.loop
+--     if uv.fs_stat(path) and uv.fs_stat(path).type == "directory" then
+--       -- Open local directories with oil
+--       require("oil").open(path)
+--     else
+--       -- Open local files
+--       vim.cmd("edit " .. path)
+--     end
+--   end
+-- end
+--
+-- -- Keybinding for the current file or directory
+-- vim.api.nvim_set_keymap("n", "-", ':lua open_path(vim.fn.expand("%:p"))<CR>', { noremap = true, silent = true })
+
+-- local function open_path(path)
+--   if string.match(path, "^scp://") or string.match(path, "^sftp://") then
+--     -- Use netrw for remote paths
+--     vim.cmd("Explore " .. path)
+--   else
+--     -- Try to use oil for local directories
+--     local uv = vim.loop
+--     if uv.fs_stat(path) and uv.fs_stat(path).type == "directory" then
+--       -- Load oil if not already loaded
+--       local ok, oil = pcall(require, "oil")
+--       if ok then
+--         oil.open(path)
+--       else
+--         vim.cmd("edit " .. path) -- Fallback to editing the directory as a file
+--       end
+--     else
+--       -- Open local files
+--       vim.cmd("edit " .. path)
+--     end
+--   end
+-- end
+--
+-- -- Keybinding to trigger open_path
+-- vim.api.nvim_set_keymap("n", "-", ':lua open_path(vim.fn.expand("%:p"))<CR>', { noremap = true, silent = true })
+--
+-- vim.api.nvim_create_autocmd("BufEnter", {
+--   pattern = "*",
+--   callback = function()
+--     local path = vim.fn.expand("<afile>:p")
+--     if vim.fn.isdirectory(path) == 1 then
+--       open_path(path)
+--     end
+--   end,
+-- })
+
+-- Set up an autocommand to ensure 'netrw' handles 'scp://' path
+-- vim.api.nvim_create_autocmd("BufReadCmd", {
+--   pattern = "scp://*",
+--   callback = function(args)
+--     local path = args.file -- Get the file path
+--     vim.cmd("edit " .. path) -- Force 'netrw' to open the file
+--   end,
+-- })
+-- -- Check if a file is on a remote server
+-- --
+-- local function is_remote_file(filepath)
+--   return filepath:match("^scp://") or filepath:match("^ftp://") or filepath:match("^sftp://")
+-- end
+--
+-- -- Dynamically disable Oil plugin
+-- vim.api.nvim_create_autocmd("BufEnter", {
+--   callback = function()
+--     local filepath = vim.fn.expand("%:p")
+--     print("file path " .. filepath)
+--     if is_remote_file(filepath) then
+--       -- Disable Oil plugin functionality
+--       if package.loaded["oil"] then
+--         require("oil").setup({ adapters = {} }) -- Disable Oil
+--         print("Oil plugin disabled for remote file: " .. filepath)
+--       end
+--       vim.g.loaded_netrw = nil
+--       vim.g.loaded_netrwPlugin = nil
+--       vim.cmd("runtime plugin/netrwPlugin.vim")
+--       print("Netrw enabled for remote file: " .. filepath)
+--     else
+--       -- Re-enable Oil if required
+--       if package.loaded["oil"] then
+--         require("oil").setup({ adapters = { "ssh", "file" } }) -- Re-enable Oil
+--         print("Oil plugin re-enabled for local file: " .. filepath)
+--       end
+--       vim.g.loaded_netrw = 1
+--       vim.g.loaded_netrwPlugin = 1
+--       print("Netrw disabled for local file: " .. filepath)
+--     end
+--   end,
+-- })
+
+---
+-- Function to check if a file path is remote
+-- local function is_remote_file(filepath)
+--   return filepath:match("^scp://") or filepath:match("^ftp://") or filepath:match("^sftp://")
+-- end
+--
+-- -- Function to disable Oil and enable Netrw
+-- local function use_netrw()
+--   if package.loaded["oil"] then
+--     require("oil").setup({ adapters = {} }) -- Disable Oil
+--   end
+--   vim.g.loaded_netrw = nil
+--   vim.g.loaded_netrwPlugin = nil
+--   vim.cmd("runtime plugin/netrwPlugin.vim")
+-- end
+--
+-- -- Function to enable Oil and disable Netrw
+-- local function use_oil()
+--   if package.loaded["oil"] then
+--     require("oil").setup({ adapters = { "ssh", "file" } }) -- Enable Oil
+--   end
+--   vim.g.loaded_netrw = 1
+--   vim.g.loaded_netrwPlugin = 1
+-- end
+--
+-- -- Check arguments at startup
+-- local cmd_args = vim.fn.argv()
+-- if type(cmd_args) == "string" then
+--   cmd_args = { cmd_args } -- Ensure cmd_args is a list
+-- end
+-- for _, arg in ipairs(cmd_args) do
+--   if is_remote_file(arg) then
+--     use_netrw()
+--     print("Netrw enabled for remote file: " .. arg)
+--     break
+--   else
+--     use_oil()
+--     print("Oil enabled for remote file: " .. arg)
+--     break
+--   end
+-- end
+--
+-- -- Ensure dynamic switching works for files opened within Neovim
+-- vim.api.nvim_create_autocmd("BufEnter", {
+--   callback = function()
+--     local filepath = vim.fn.expand("%:p")
+--     if is_remote_file(filepath) then
+--       use_netrw()
+--       print("Netrw enabled for remote file: " .. filepath)
+--     else
+--       use_oil()
+--       print("Oil plugin re-enabled for local file: " .. filepath)
+--     end
+--   end,
+-- })
