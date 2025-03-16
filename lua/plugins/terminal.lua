@@ -20,7 +20,7 @@ local function smart_terminal()
 
   if vim.api.nvim_win_get_buf(0) == buf then
     vim.api.nvim_win_set_height(0, 3)
-    vim.cmd.wincmd("p")
+    vim.cmd("wincmd p")
     return
   end
 
@@ -33,8 +33,8 @@ local function smart_terminal()
     end
   end
 
-  vim.cmd.new()
-  vim.cmd.wincmd("J")
+  vim.cmd("new")
+  vim.cmd("wincmd J")
   vim.api.nvim_win_set_height(0, 12)
   if buf == nil then
     vim.cmd("terminal")
